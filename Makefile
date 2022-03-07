@@ -3,11 +3,12 @@ CXXFLAGS = #-DDEBUG__  #-DDEBUG___  #-std=c++11 -O3 #-DYYDEBUG=1
 
 SRC_DIR     = src/
 BIN_DIR     = bin/
+LIB_DIR     = lib/
 OBJS_DIR    = obj/
 INCLUDE_DIR = include/
 INCLUDE     = $(addprefix -I, $(INCLUDE_DIR))
 
-LIB = robonlib.a
+LIB = $(LIB_DIR)/robonlib.a
 
 SRCS_FILES    = stl_parser.cpp \
           stl_scanner.cpp \
