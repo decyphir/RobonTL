@@ -13,12 +13,7 @@ namespace RobonTL {
 
 map<string, token_type> STLDriver::reserved = map<string,token_type>(); // filled in stl_scanner.lpp
 
-    //map<string, short> transducer::signal_map = map<string,short>();
-
-    //map<string, double> transducer::param_map = map<string, double>();
-
-double Signal::BigM = 100.;
-//vector<vector<double>> *transducer::trace_data_ptr = nullptr;
+double Signal::BigM = 10000.;
 
 STLDriver::STLDriver()
 : trace_scanning(false),
@@ -43,6 +38,9 @@ STLDriver::STLDriver(trace_data _trace)
 	data = _trace;
 };
 
+
+    
+    
 bool STLDriver::parse_stream(std::istream& in, const std::string& sname)
 {
 	streamname = sname;
@@ -85,6 +83,31 @@ void STLDriver::error(const std::string& m)
 	std::cerr << m << std::endl;
 }
 
+    string STLDriver::get_signals_names() const {
+
+     // get number of signals
+
+     int n_signals = signal_map.size();
+     // cout << "n_signals:" << n_signals << endl;
+     string signames[n_signals]; 
+     
+     //     for (auto ii = signal_map->begin(); ii != signal_map->end(); ii++){
+     for (const auto& ii: signal_map){         
+         string sig = ii.first;
+         int idx = ii.second-1;
+         signames[idx] = sig;         
+     }
+
+     string str_out = signames[0];
+     for (int idx = 1; idx < n_signals; idx++){
+         str_out += " "+signames[idx];                  
+     }
+     
+     return str_out;
+        
+}
+
+    
 /** clear assigned formulas and trace_test_queue */
 void STLDriver::clear() {
 

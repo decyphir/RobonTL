@@ -16,84 +16,67 @@
 using namespace std;
 using namespace RobonTL;
 
+
+int read_sample(vector<double> &sample) {
+    sample.clear();
+    string line; 
+    getline(cin, line);
+    istringstream reader(line);
+    while (!reader.eof()) {
+        double val;
+        reader >> val;
+        sample.push_back(val);
+    }
+    return 0.;
+}
+
+
 int main(int argc, char** argv) {
 
 
-    // Read formula
-    string phi_st = "alw_[0, 2.4] (x[t]>0)";
-    cout << "Enter formula (default: alw_[0, 5] (x[t]>0))\n"  << endl;
-    string req_st = string("signal x,y,z\n") + string("phi:=") + phi_st;
-	
-    STLDriver stl_driver = STLDriver();	
-    bool parse_success = stl_driver.parse_string(req_st);
-    if (parse_success) 
+    /*  Read formula(s). 
+
+        Formulas can be defined in a file or a string. At minima there needs to be: 
+        - a signal(s) declaration  
+        - one formula assignement, e.g.:
+
+        signal x,y
+        phi := alw_[0, 5.] (x[t]>0 and y[t]<2)
+
+    */
+
+    // STLDriver is the class implementing the parser.            
+    
+    STLDriver stl_driver = STLDriver();	  
+    bool parse_success = stl_driver.parse_file("spec.stl"); // parse_string is possible too, instead of file
+    
+    if (parse_success) {
         cout << "Formula parsed successfully." << endl;
+            }
     else {
         cout << "Something went wrong." <<endl;
         return 1; 
     }  
 
+    // Get a monitor on formula phi. Any formula assigned with := is available
+    STLMonitor phi = stl_driver.get_monitor("phi");     
+    cout << *phi.formula << endl;  // displays formula of the monitor
+
+    string signames = stl_driver.get_signals_names(); // get signal names involved in the formula
+    cout << "Enter values for " << endl;
+    cout << "time " << signames << endl;
     
     // Read data
-    vector<double> sample;    
-
-    double t = 0;
-    double dt = 0.1; 
-
-    if (parse_success) 
-        cout << "Formula parsed successfully." << endl;
-    else {
-        cout << "Something went wrong." <<endl;
-        return 1; 
-    }  
-
     
     while (1) {
-        // push time 
-        sample.push_back(t);
-        t += dt;
-
-        // push value(s)
-        cout << "Enter new value (666 to quit)" << endl;
-        double value;
-        cin >> value; 
-        sample.push_back(value);
-
-        // push new sample
-        stl_driver.data.push_back(sample);
-        sample.clear(); 
-        if (value==666)
-            break;
-
-        // Computes upper and lower robustness
-
-        /** compute robustness **/ 
-        transducer* phi;
-        double rob, rob_up, rob_low;
-        rob = rob_up = rob_low = 0;
-     
-        Signal z, z_up, z_low;
-	
-        phi = stl_driver.formula_map["phi"]->clone();
-        phi->set_horizon(0.,0.);
-        phi->set_trace_data_ptr(stl_driver.data);                           
-        rob    = phi->compute_robustness();
-        rob_up = phi->compute_upper_rob();
-        rob_low= phi->compute_lower_rob();
-        z =  phi->z;
-        z_low = phi->z_low;
-        z_up = phi->z_up;
-        z.addLastSample();
-        z_low.addLastSample();
-        z_up.addLastSample();
-    
-
-        cout << "Size of data:" << (phi->trace_data_ptr)->size() << endl;
-        cout << "rob:" << rob << endl;
-        cout << "rob_low:" << rob_low << endl;
-        cout << "rob_up:" << rob_up << endl;
-        delete phi;
-    
+        vector<double> sample;    
+        read_sample(sample); // reads data - first                
+        phi.add_sample(sample);
+        
+        // Computes upper and lower robustness     	
+        double rob_up = phi.get_upper_rob();
+        double rob_low= phi.get_lower_rob();
+        cout << "time: " << phi.current_time << " Interval robustness: [" << rob_low << ", " << rob_up << "]" << endl;        
     }
    
 
